@@ -1,0 +1,90 @@
+plugins {
+    id 'com.android.library'
+    id 'maven-publish'
+    id 'signing'
+}
+
+def mainVersion = '2.0'
+
+android {
+    namespace 'io.github.sublimis.steadyscreen'
+    compileSdk 34
+
+    defaultConfig {
+        minSdk 21
+        targetSdk 34
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    publishing {
+        singleVariant("release") {
+            withSourcesJar()
+            withJavadocJar()
+        }
+    }
+}
+
+publishing {
+    publications {
+        release(MavenPublication) {
+            groupId = 'io.github.sublimis.steadyscreen'
+            artifactId = 'steadyscreen-lib'
+            version = mainVersion
+
+            afterEvaluate {
+                from components.release
+            }
+
+            pom {
+                name = "${groupId}:${artifactId}"
+                description = "Interface to the SteadyScreen service which allows compatible applications to easily counteract small screen movements within their GUI."
+                inceptionYear = "2025"
+                url = "https://github.com/Sublimis/SteadyScreenLib"
+                licenses {
+                    license {
+                        name = "The Apache License, Version 2.0"
+                        url = "http://www.apache.org/licenses/LICENSE-2.0.txt"
+                        distribution = "http://www.apache.org/licenses/LICENSE-2.0.txt"
+                    }
+                }
+                developers {
+                    developer {
+                        id = "Sublimis"
+                        name = "Sublimis"
+                        url = "https://github.com/Sublimis"
+                    }
+                }
+                scm {
+                    url = "https://github.com/Sublimis/SteadyScreenLib/tree/main"
+                    connection = "scm:git:git://github.com/Sublimis/SteadyScreenLib.git"
+                    developerConnection = "scm:git:ssh://github.com:Sublimis/SteadyScreenLib.git"
+                }
+            }
+        }
+    }
+
+    repositories {
+        maven {
+            name = 'myrepo'
+            url = layout.buildDirectory.dir("repo")
+        }
+    }
+}
+
+signing {
+    sign publishing.publications
+}
+
+dependencies {
+    implementation 'androidx.annotation:annotation:1.9.1'
+}
+
+tasks.register('generateRepo', Zip) {
+    def publishTask = tasks.named('publishReleasePublicationToMyrepoRepository')
+    from publishTask.map { it.getRepository().getUrl() }
+    archiveFileName.set("SteadyScreenLib-v${mainVersion}.zip")
+}
